@@ -5,11 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64",
-    "postinstall": "electron-builder install-app-deps"
+    "build": "electron-builder --win --x64"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
+    "sql.js": "^1.10.3",
     "cors": "^2.8.5",
     "express": "^4.18.3"
   },
@@ -38,6 +37,9 @@
       "preload.js",
       "renderer/**/*",
       "node_modules/**/*"
+    ],
+    "extraResources": [
+      { "from": "node_modules/sql.js/dist/sql-wasm.wasm", "to": "sql-wasm.wasm" }
     ]
   }
 }
