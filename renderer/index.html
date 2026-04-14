@@ -347,8 +347,12 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
-const API = 'http://localhost:7474';
-const AGENT = API;  // same server handles everything
+// כשרץ ב-Electron — התחבר ישירות ל-Render לנתונים
+// פעולות מקומיות (הרצה, dialog) — דרך localhost:7474
+const RENDER = 'https://devtrack-y6ef.onrender.com';
+const LOCAL  = 'http://localhost:7474';
+const API    = RENDER;   // נתונים מ-Render
+const AGENT  = LOCAL;    // פעולות מקומיות
 
 // ─── STATE ────────────────────────────────────────────────
 let projects = [];
@@ -392,7 +396,7 @@ async function loadData() {
     checkHealth();
   } catch (e) {
     document.getElementById('cardsGrid').innerHTML =
-      '<div class="empty-state" style="grid-column:1/-1"><div class="big">⚠</div><p style="color:var(--red)">לא ניתן להתחבר לשרת<br><small style="color:var(--text3)">ודא ש-app.py רץ על פורט 7474</small></p></div>';
+      '<div class="empty-state" style="grid-column:1/-1"><div class="big">⚠</div><p style="color:var(--red)">לא ניתן להתחבר ל-Render<br><small style="color:var(--text3)">המתן 30 שניות ונסה שוב — Render אולי נרדם</small></p><button class="btn btn-primary" style="margin-top:1rem" onclick="loadData()">🔄 נסה שוב</button></div>';
     checkHealth();
   }
 }
@@ -692,7 +696,7 @@ async function runBat(pid, event) {
     // הרצה דרך local agent
     try {
       const body = p.batPath ? { bat_path: p.batPath } : { exe_cmd: p.exe, work_dir: p.path };
-      const res = await fetch(AGENT + '/run', {
+      const res = await fetch(LOCAL + '/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -719,7 +723,7 @@ async function openFolderAgent(pid, event) {
   const p = projects.find(x => x.id === pid); if (!p || !p.path) return;
   if (agentOk) {
     try {
-      await fetch(API + '/api/open-folder', {
+      await fetch(LOCAL + '/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: p.path }),
@@ -740,7 +744,7 @@ function openFieldUrl(fid) { const v = document.getElementById(fid).value.trim()
 function handleFolderPick(input) { const f = input.files[0]; if (!f) return; const p = f.path || (f.webkitRelativePath ? f.webkitRelativePath.split('/')[0] : f.name); document.getElementById('fPath').value = p; markDirty(); refreshBatPreview(); toast('תיקייה: ' + p); input.value = ''; }
 async function handleFilePick(input) {
   try {
-    const r = await apiFetch('/api/pick-file');
+    const r = await fetch(LOCAL+'/api/pick-file').then(r=>r.json());
     if (r.canceled) return;
     document.getElementById('fExe').value = r.path;
     markDirty(); refreshBatPreview(); toast('קובץ: ' + r.path);
@@ -751,7 +755,7 @@ function toast(msg) { const el = document.getElementById('toast'); el.textConten
 // ─── JSON EXPORT / IMPORT ─────────────────────────────────
 async function openJsonImport() {
   try {
-    const r = await apiFetch('/api/pick-json');
+    const r = await fetch(LOCAL+'/api/pick-json').then(r=>r.json());
     if (r.canceled) return;
     const parsed = JSON.parse(r.content);
     const imp = Array.isArray(parsed) ? parsed : (parsed.projects || null);
