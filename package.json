@@ -8,7 +8,6 @@
     "build": "electron-builder --win --x64"
   },
   "dependencies": {
-    "sql.js": "^1.10.3",
     "cors": "^2.8.5",
     "express": "^4.18.3"
   },
@@ -21,8 +20,7 @@
     "productName": "DevTrack",
     "win": {
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        { "target": "nsis", "arch": ["x64"] }
       ]
     },
     "nsis": {
@@ -37,9 +35,6 @@
       "preload.js",
       "renderer/**/*",
       "node_modules/**/*"
-    ],
-    "extraResources": [
-      { "from": "node_modules/sql.js/dist/sql-wasm.wasm", "to": "sql-wasm.wasm" }
     ]
   }
 }
