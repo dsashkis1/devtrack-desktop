@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -37,9 +36,9 @@ jobs:
           path: dist/*Setup*.exe
           if-no-files-found: warn
 
-      - name: Upload Portable.exe
+      - name: Upload Portable
         uses: actions/upload-artifact@v4
         with:
           name: DevTrack-Portable-Windows
-          path: dist/*.exe
+          path: dist/*Portable*.exe
           if-no-files-found: warn
