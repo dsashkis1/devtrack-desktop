@@ -356,12 +356,9 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
-// כשרץ ב-Electron — התחבר ישירות ל-Render לנתונים
-// פעולות מקומיות (הרצה, dialog) — דרך localhost:7474
-const RENDER = 'https://devtrack-y6ef.onrender.com';
-const LOCAL  = 'http://localhost:7474';
-const API    = RENDER;   // נתונים מ-Render
-const AGENT  = LOCAL;    // פעולות מקומיות
+const LOCAL = 'http://localhost:7474';
+const API   = LOCAL;
+const AGENT = LOCAL;
 
 // ─── STATE ────────────────────────────────────────────────
 let projects = [];
@@ -388,7 +385,7 @@ async function checkHealth() {
     await apiFetch('/api/health');
     dot.className = 'status-dot ok';
     isLocal = true; agentOk = true;
-    lbl.textContent = 'DevTrack ✓';
+    lbl.textContent = '✓ פועל';
     document.getElementById('agentStatus').textContent = '⚡ מקומי';
     document.getElementById('agentStatus').style.color = 'var(--green)';
   } catch {
@@ -405,7 +402,7 @@ async function loadData() {
     checkHealth();
   } catch (e) {
     document.getElementById('cardsGrid').innerHTML =
-      '<div class="empty-state" style="grid-column:1/-1"><div class="big">⚠</div><p style="color:var(--red)">לא ניתן להתחבר ל-Render<br><small style="color:var(--text3)">המתן 30 שניות ונסה שוב — Render אולי נרדם</small></p><button class="btn btn-primary" style="margin-top:1rem" onclick="loadData()">🔄 נסה שוב</button></div>';
+      '<div class="empty-state" style="grid-column:1/-1"><div class="big">⚠</div><p style="color:var(--red)">שגיאה בטעינה</p><button class="btn btn-primary" style="margin-top:1rem" onclick="loadData()">🔄 נסה שוב</button></div>';
     checkHealth();
   }
 }
