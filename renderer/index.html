@@ -369,12 +369,21 @@ let agentOk = true;   // תמיד true ב-Electron
 
 // ─── API HELPERS ──────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
-  const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(opts.method || 'GET', 'http://127.0.0.1:7474' + path, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch(e) { reject(e); }
+      } else {
+        reject(new Error('HTTP ' + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error('שגיאת חיבור'));
+    xhr.send(opts.body || null);
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
 }
 
 // ─── CONNECTION STATUS ────────────────────────────────────
