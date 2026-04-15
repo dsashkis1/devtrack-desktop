@@ -251,9 +251,18 @@
         <label>📁 נתיב תיקיית הפרויקט</label>
         <div class="frow">
           <input type="text" id="fPath" placeholder="C:\projects\my-app" oninput="markDirty();refreshBatPreview()">
-          <button class="btn btn-sm" onclick="copyField('fPath')">📋</button>
-          <button class="btn btn-sm" onclick="document.getElementById('folderPicker').click()">📂</button>
+          <button class="btn btn-sm" onclick="copyField('fPath')" title="העתק">📋</button>
+          <button class="btn btn-sm" onclick="pickFolder()" title="בחר תיקייה">📂 תיקייה</button>
         </div>
+      </div>
+      <div class="field" style="margin-top:1rem">
+        <label>▶ קובץ הרצה (.bat / .exe / .py)</label>
+        <div class="frow">
+          <input type="text" id="fExe" placeholder="run.bat  או  npm start  או  python main.py" oninput="markDirty();refreshBatPreview()">
+          <button class="btn btn-sm" onclick="copyField('fExe')" title="העתק">📋</button>
+          <button class="btn btn-sm btn-primary" onclick="pickExeFile()" title="בחר קובץ הרצה">📄 בחר קובץ</button>
+        </div>
+        <div class="field-hint">לחץ "בחר קובץ" לבחירת .bat/.exe מהדיסק — הנתיב יתמלא אוטומטית</div>
       </div>
     </div>
 
