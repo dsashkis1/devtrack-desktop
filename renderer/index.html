@@ -828,6 +828,41 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveProj();
 });
 
+// ─── PICKER FUNCTIONS ─────────────────────────────────────
+function apiCall(method, endpoint, body) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, 'http://127.0.0.1:7474' + endpoint, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = 30000;
+    xhr.onload = () => {
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch(e) { reject(new Error('Parse error')); }
+    };
+    xhr.onerror = () => reject(new Error('שגיאת חיבור לשרת'));
+    xhr.ontimeout = () => reject(new Error('timeout'));
+    xhr.send(body ? JSON.stringify(body) : null);
+  });
+}
+
+async function pickFolder() {
+  try {
+    const r = await apiCall('GET', '/api/pick-folder');
+    if (!r || r.canceled) return;
+    document.getElementById('fPath').value = r.path;
+    markDirty(); refreshBatPreview(); toast('✓ תיקייה: ' + r.path);
+  } catch(e) { toast('שגיאה בבחירת תיקייה: ' + e.message); }
+}
+
+async function pickExeFile() {
+  try {
+    const r = await apiCall('GET', '/api/pick-file');
+    if (!r || r.canceled) return;
+    document.getElementById('fExe').value = r.path;
+    markDirty(); refreshBatPreview(); toast('✓ קובץ: ' + r.path);
+  } catch(e) { toast('שגיאה בבחירת קובץ: ' + e.message); }
+}
+
 // ─── INIT ─────────────────────────────────────────────────
 loadData();
 </script>
