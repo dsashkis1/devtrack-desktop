@@ -79,10 +79,23 @@ api.post('/api/import', (req, res) => {
 // ── פעולות מקומיות ────────────────────────────────────────
 api.post('/api/run', (req, res) => {
   const { bat_path, exe_cmd, work_dir } = req.body;
-  const cmd = bat_path
-    ? `start "" "${bat_path}"`
-    : `start cmd /k "${exe_cmd}"`;
-  exec(cmd, { shell: true, cwd: work_dir || undefined },
+  let cmd;
+  if (bat_path) {
+    // הרצת .bat — cd לתיקייה שלו קודם
+    const dir = path.dirname(bat_path);
+    const file = path.basename(bat_path);
+    cmd = `start cmd /c "cd /d "${dir}" && "${file}""`;
+  } else if (exe_cmd) {
+    // הרצת פקודה — cd לתיקיית הפרויקט קודם
+    if (work_dir) {
+      cmd = `start cmd /k "cd /d "${work_dir}" && ${exe_cmd}"`;
+    } else {
+      cmd = `start cmd /k "${exe_cmd}"`;
+    }
+  } else {
+    return res.status(400).json({ error: 'אין פקודה' });
+  }
+  exec(cmd, { shell: true },
     err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
 });
 
@@ -137,13 +150,14 @@ function createWindow() {
       nodeIntegration: false, contextIsolation: true
     }
   });
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.loadURL('http://127.0.0.1:7474');
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url); return { action: 'deny' };
   });
 }
 
 app.whenReady().then(() => {
+  api.use(express.static(path.join(__dirname, 'renderer')));
   server = api.listen(7474, '127.0.0.1', () => {
     console.log('DevTrack ready — data:', DATA_PATH);
     createWindow();
