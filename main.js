@@ -79,34 +79,35 @@ api.post('/api/import', (req, res) => {
 // ── פעולות מקומיות ────────────────────────────────────────
 api.post('/api/run', (req, res) => {
   const { bat_path, exe_cmd, work_dir } = req.body;
-  let cmd;
 
   if (bat_path) {
     const ext = path.extname(bat_path).toLowerCase();
+    let psCmd;
     if (ext === '.lnk') {
-      // קיצור דרך — Shell Execute
-      cmd = `powershell -Command "Invoke-Item '${bat_path}'"`;
-    } else if (ext === '.exe') {
-      // קובץ exe ישיר
-      cmd = `start "" "${bat_path}"`;
+      // קיצור דרך
+      psCmd = `Invoke-Item -Path '${bat_path.replace(/'/g, "''")}'`;
     } else {
-      // .bat .cmd — cd לתיקייה קודם
+      // .bat .cmd .exe — הרצה ישירה עם PowerShell Start-Process
       const dir = path.dirname(bat_path);
-      const file = path.basename(bat_path);
-      cmd = `start cmd /c "cd /d \"${dir}\" && \"${file}\""`;
+      psCmd = `Set-Location -Path '${dir.replace(/'/g, "''")}'; Start-Process -FilePath '${bat_path.replace(/'/g, "''")}'`;
     }
-  } else if (exe_cmd) {
-    if (work_dir) {
-      cmd = `start cmd /k "cd /d \"${work_dir}\" && ${exe_cmd}"`;
-    } else {
-      cmd = `start cmd /k "${exe_cmd}"`;
-    }
-  } else {
-    return res.status(400).json({ error: 'אין פקודה' });
-  }
+    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCmd}"`;
+    exec(cmd, { shell: true },
+      err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
 
-  exec(cmd, { shell: true },
-    err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
+  } else if (exe_cmd) {
+    // פקודה — הרץ דרך PowerShell עם cd לתיקייה
+    const dir = (work_dir || '').replace(/'/g, "''");
+    const psCmd = dir
+      ? `Set-Location -Path '${dir}'; ${exe_cmd}`
+      : exe_cmd;
+    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -NoExit -Command "${psCmd}"`;
+    exec(cmd, { shell: true },
+      err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
+
+  } else {
+    res.status(400).json({ error: 'אין פקודה' });
+  }
 });
 
 api.post('/api/open-folder', (req, res) => {
