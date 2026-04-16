@@ -81,30 +81,21 @@ api.post('/api/run', (req, res) => {
   const { bat_path, exe_cmd, work_dir } = req.body;
 
   if (bat_path) {
-    const ext = path.extname(bat_path).toLowerCase();
-    let psCmd;
-    if (ext === '.lnk') {
-      // קיצור דרך
-      psCmd = `Invoke-Item -Path '${bat_path.replace(/'/g, "''")}'`;
-    } else {
-      // .bat .cmd .exe — הרצה ישירה עם PowerShell Start-Process
-      const dir = path.dirname(bat_path);
-      psCmd = `Set-Location -Path '${dir.replace(/'/g, "''")}'; Start-Process -FilePath '${bat_path.replace(/'/g, "''")}'`;
-    }
-    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCmd}"`;
-    exec(cmd, { shell: true },
-      err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
-
-  } else if (exe_cmd) {
-    // פקודה — הרץ דרך PowerShell עם cd לתיקייה
-    const dir = (work_dir || '').replace(/'/g, "''");
-    const psCmd = dir
-      ? `Set-Location -Path '${dir}'; ${exe_cmd}`
-      : exe_cmd;
-    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -NoExit -Command "${psCmd}"`;
-    exec(cmd, { shell: true },
-      err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
-
+    // shell.openPath = לחיצה כפולה — עוקף CMD/PowerShell/GroupPolicy
+    shell.openPath(bat_path).then(err => {
+      if (err) {
+        // fallback — נסה shell.openExternal
+        shell.openExternal('file:///' + bat_path.replace(/\\/g, '/')).then(() => {
+          res.json({ ok: true });
+        }).catch(e => res.status(500).json({ error: e.message }));
+      } else {
+        res.json({ ok: true });
+      }
+    });
+  } else if (exe_cmd && work_dir) {
+    // פקודה עם תיקייה — shell.openPath לתיקייה + הוראה ידנית
+    shell.openPath(work_dir);
+    res.json({ ok: true, note: 'תיקייה נפתחה — הרץ את הפקודה ידנית' });
   } else {
     res.status(400).json({ error: 'אין פקודה' });
   }
