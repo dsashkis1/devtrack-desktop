@@ -80,21 +80,31 @@ api.post('/api/import', (req, res) => {
 api.post('/api/run', (req, res) => {
   const { bat_path, exe_cmd, work_dir } = req.body;
   let cmd;
+
   if (bat_path) {
-    // הרצת .bat — cd לתיקייה שלו קודם
-    const dir = path.dirname(bat_path);
-    const file = path.basename(bat_path);
-    cmd = `start cmd /c "cd /d "${dir}" && "${file}""`;
+    const ext = path.extname(bat_path).toLowerCase();
+    if (ext === '.lnk') {
+      // קיצור דרך — Shell Execute
+      cmd = `powershell -Command "Invoke-Item '${bat_path}'"`;
+    } else if (ext === '.exe') {
+      // קובץ exe ישיר
+      cmd = `start "" "${bat_path}"`;
+    } else {
+      // .bat .cmd — cd לתיקייה קודם
+      const dir = path.dirname(bat_path);
+      const file = path.basename(bat_path);
+      cmd = `start cmd /c "cd /d \"${dir}\" && \"${file}\""`;
+    }
   } else if (exe_cmd) {
-    // הרצת פקודה — cd לתיקיית הפרויקט קודם
     if (work_dir) {
-      cmd = `start cmd /k "cd /d "${work_dir}" && ${exe_cmd}"`;
+      cmd = `start cmd /k "cd /d \"${work_dir}\" && ${exe_cmd}"`;
     } else {
       cmd = `start cmd /k "${exe_cmd}"`;
     }
   } else {
     return res.status(400).json({ error: 'אין פקודה' });
   }
+
   exec(cmd, { shell: true },
     err => err ? res.status(500).json({ error: err.message }) : res.json({ ok: true }));
 });
@@ -114,7 +124,7 @@ api.get('/api/pick-file', async (req, res) => {
   const r = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [
-      { name: 'קובץ הרצה', extensions: ['bat','exe','cmd','sh','py','js'] },
+      { name: 'קובץ הרצה', extensions: ['lnk','bat','exe','cmd','sh','py','js'] },
       { name: 'All Files', extensions: ['*'] }
     ],
     title: 'בחר קובץ הרצה'
